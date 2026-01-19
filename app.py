@@ -125,13 +125,10 @@ def load_metrics():
 def load_cm():
     return torch.load("app_data/cm.pt")
 
-@st.cache_data
-def load_viz_numpy():
-    viz_data = torch.load("app_data/mouse_viz.pt", map_location="cpu")
-    templates = [t.detach().cpu().numpy() for t in viz_data["templates"]]
-    labels    = [t.detach().cpu().numpy() for t in viz_data["labels"]]
-    preds     = [t.detach().cpu().numpy() for t in viz_data["preds"]]
-    return templates, labels, preds
+@st.cache_data(max_entries=5)
+def load_viz(i):
+    data = torch.load(f"app_data/volume_{i}.pt", map_location="cpu", weights_only=False)
+    return [data["template"]], [data["pred"]], [data["label"]]
 
 N_CLASSES = len(class_dict)
 
@@ -162,18 +159,15 @@ This interactive visualization shows the brain sliced in the coronal direction, 
 - **Overlap**: Red shows where the ground truth and the prediction disagree. This is usually happening on borders between areas.
 """)
 
-templates, labels, preds = load_viz_numpy()
-
-if show_unified:
-    labels = [map_volume(volume, mapping_dict) for volume in labels]
-    preds = [map_volume(volume, mapping_dict) for volume in preds]
-
 viz_streamlit(
-    pred=preds,
-    gt=labels,
-    template=templates,
+    pred=None,
+    gt=None,
+    template=None,
     show_template=True,
     class_dict=unified_class_dict if show_unified else class_dict,
+    load_viz=load_viz,
+    show_unified=show_unified,
+    mapping_dict=mapping_dict,
 )
 
 # Metrics

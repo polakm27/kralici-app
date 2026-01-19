@@ -510,6 +510,9 @@ def viz_streamlit(
     show_template=False,
     n_classes=None,
     class_dict=None,
+    load_viz=None,
+    show_unified=False,
+    mapping_dict=None,
     show_bg=False,
     cmap_name="tab20",
 ):
@@ -521,6 +524,9 @@ def viz_streamlit(
       gt:   (n_slices, x, y) or list of such volumes
       template: (n_slices, x, y) or list of such volumes
     """
+
+    if load_viz is not None:
+        template, pred, gt = load_viz(0)
 
     # --- Normalize inputs to lists ---
     if pred is not None and not isinstance(pred, list):
@@ -537,6 +543,10 @@ def viz_streamlit(
         class_dict = {i: str(i) for i in range(n_classes)}
     else:
         n_classes = len(class_dict)
+
+    if show_unified and mapping_dict is not None:
+        gt = [map_volume(volume, mapping_dict) for volume in gt]
+        pred = [map_volume(volume, mapping_dict) for volume in pred]
 
     show_overlap = bool(show_overlap and pred is not None and gt is not None)
     show_template = bool(show_template and template is not None)
@@ -580,7 +590,8 @@ def viz_streamlit(
     # --- Widgets (Streamlit) ---
     c1, c2, c3 = st.columns([1, 2, 2])
     with c1:
-        vol_idx = st.selectbox("Volume index", list(range(n_volumes)), index=0)
+        vol_idx = st.selectbox("Volume index", list(range(9)), index=0)
+        template, pred, gt = load_viz(vol_idx)
     with c2:
         slice_idx = st.slider("Y", min_value=0, max_value=n_slices - 1, value=n_slices // 2, step=1)
     with c3:
@@ -606,15 +617,15 @@ def viz_streamlit(
     # --- Pull slices (transpose + sagittal style, matching your .T) ---
     template_slice = None
     if template is not None:
-        template_slice = template[vol_idx][slice_idx, :, :].T
+        template_slice = template[0][slice_idx, :, :].T
 
     pred_slice = None
     if pred is not None:
-        pred_slice = pred[vol_idx][slice_idx, :, :].T
+        pred_slice = pred[0][slice_idx, :, :].T
 
     gt_slice = None
     if gt is not None:
-        gt_slice = gt[vol_idx][slice_idx, :, :].T
+        gt_slice = gt[0][slice_idx, :, :].T
 
     # --- Create figure ---
     fig, axs = plt.subplots(1, n_axes, figsize=(15, 3))
