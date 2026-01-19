@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import ipywidgets as widgets
-from IPython.display import display
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 import streamlit as st
